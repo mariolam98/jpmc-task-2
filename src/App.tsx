@@ -8,12 +8,15 @@ import './App.css';
  */
 interface IState {
   data: ServerRespond[],
+  showGraph: boolean,
 }
 
 /**
  * The parent element of the react app.
  * It renders title, button and Graph react element.
  */
+ interface PerspectiveViewerElement extends HTMLElement {load: (table: Table) => void,
+}
 class App extends Component<{}, IState> {
   constructor(props: {}) {
     super(props);
@@ -22,30 +25,46 @@ class App extends Component<{}, IState> {
       // data saves the server responds.
       // We use this state to parse data down to the child element (Graph) as element property
       data: [],
+      showGraph: false,
     };
   }
 
-  /**
-   * Render Graph react component with state.data parse as property data
-   */
   renderGraph() {
+  if (this.state.showGraph) {
     return (<Graph data={this.state.data}/>)
   }
+}
 
-  /**
-   * Get new data from server and update the state with the new data
-   */
+componentDidMount() {
+// Get element to attach the table from DOM.
+cons elem = document. getElementsByTagName('perspective-viewer')[0] as unknown as PerspectiveViewerElement;
+}
+
+
   getDataFromServer() {
-    DataStreamer.getData((serverResponds: ServerRespond[]) => {
-      // Update the state by creating a new array of data that consists of
-      // Previous data in the state and the new data from server
-      this.setState({ data: [...this.state.data, ...serverResponds] });
-    });
+    let x = 0;
+    const interval = SetInterval (() => {
+          DataStreamer.getData((serverResponds: ServerRespond[]) => {
+            this.setState({
+            data: serverResponds,
+            shownGraph: true,
+            )}
+elem.setAttribute('view', 'y_line');
+elem.setAttribute('column-pivots', '["stock"]');
+elem.setAttribute('row-pivots', '["timestamp"]');
+elem.setAttribute('columns', '["top_ask_price"]');
+elem.setAttribute('aggregates',
+   {"stock":"distinct count",
+   "top_ask_price":"avg",
+   "top_bid_price":"avg",
+   "timestamp":"distinct count"});
   }
+if (x > 1000) {
+  clearInterval(interval);
+  }
+ }, 100);
+}
 
-  /**
-   * Render the App react component
-   */
   render() {
     return (
       <div className="App">
